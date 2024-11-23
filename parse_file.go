@@ -58,21 +58,24 @@ func parseStructs(fullpath, src string) ([]StructInfo, error) {
 
 			for _, field := range structType.Fields.List {
 				fieldType := field.Type.(*ast.Ident).Name
+
 				fieldTag := ""
 				if field.Tag != nil {
 					fieldTag = field.Tag.Value
 					fieldTag, _ = strconv.Unquote(fieldTag)
 				}
 
-				if strings.HasPrefix(fieldTag, "validate:") {
+				fieldValidations, hasValidateTag := parseFieldValidations(fieldTag)
+				if hasValidateTag {
 					currentStruct.HasValidateTag = true
 				}
 
 				for _, name := range field.Names {
 					currentStruct.FieldsInfo = append(currentStruct.FieldsInfo, FieldInfo{
-						Name: name.Name,
-						Type: fieldType,
-						Tag:  fieldTag,
+						Name:        name.Name,
+						Type:        fieldType,
+						Tag:         fieldTag,
+						Validations: fieldValidations,
 					})
 				}
 			}
@@ -82,4 +85,18 @@ func parseStructs(fullpath, src string) ([]StructInfo, error) {
 	})
 
 	return structs, nil
+}
+
+func parseFieldValidations(fieldTag string) ([]string, bool) {
+	fieldValidations := []string{}
+	hasValidateTag := false
+
+	if strings.HasPrefix(fieldTag, "validate:") {
+		hasValidateTag = true
+		tagWithoutPrefix, _ := strings.CutPrefix(fieldTag, "validate:")
+		tagWithoutQuotes, _ := strconv.Unquote(tagWithoutPrefix)
+		fieldValidations = strings.Split(tagWithoutQuotes, ",")
+	}
+
+	return fieldValidations, hasValidateTag
 }

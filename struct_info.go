@@ -16,9 +16,7 @@ import (
 
 func {{.Name}}Validate(obj *{{.Name}}) []error {
 	var errs []error
-{{range .FieldsInfo}}
-{{condition .Name .Type .Tag}}
-{{end}}
+{{range .FieldsInfo}}{{condition .Name .Type .Validations}}{{end}}
 	return errs
 }
 `
@@ -40,11 +38,18 @@ type StructInfo struct {
 	HasValidateTag bool
 }
 
-// TODO: NewFieldValidation to validate params and build the object.
+// TODO: NewFieldInfo to validate params and build the object.
 type FieldInfo struct {
-	Name string
-	Type string
-	Tag  string
+	Name        string
+	Type        string
+	Tag         string
+	Validations []string
+}
+
+type FieldTestElements struct {
+	operator     string
+	operand      string
+	errorMessage string
 }
 
 func (fv *StructInfo) GenerateValidator() (string, error) {
@@ -65,28 +70,52 @@ func (fv *StructInfo) GenerateValidator() (string, error) {
 	return code.String(), nil
 }
 
-func condition(fieldName, fieldType, fieldTag string) (string, error) {
-	tag := fieldTag
-	tag, _ = strings.CutPrefix(tag, "validate:")
+func condition(fieldName, fieldType string, fieldValidations []string) (string, error) {
 
-	if tag != `"required"` {
-		return "", fmt.Errorf("unsupported tag %s", fieldTag)
+	tests := ""
+	for _, fieldValidation := range fieldValidations {
+		testElements, err := GetFieldTestElements(fieldValidation, fieldType)
+		if err != nil {
+			return "", fmt.Errorf("field %s: %w", fieldName, err)
+		}
+
+		tests += fmt.Sprintf(
+			`
+	if obj.%s %s %s {
+		errs = append(errs, fmt.Errorf("%%w: %s", ErrValidation))
+	}
+`, fieldName, testElements.operator, testElements.operand, fmt.Sprintf(testElements.errorMessage, fieldName))
 	}
 
-	switch fieldType {
-	case "string":
-		return fmt.Sprintf(
-			`	if obj.%s == "" {
-		errs = append(errs, fmt.Errorf("%%w: %s required", ErrValidation))
-	}`, fieldName, fieldName), nil
-	case "uint8":
-		return fmt.Sprintf(
-			`	if obj.%s == 0 {
-		errs = append(errs, fmt.Errorf("%%w: %s required", ErrValidation))
-	}`, fieldName, fieldName), nil
-	default:
-		return "", fmt.Errorf("unsupported type %s", fieldType)
+	return tests, nil
+}
+
+func GetFieldTestElements(fieldValidation, fieldType string) (FieldTestElements, error) {
+	ifCode := map[string]FieldTestElements{
+		"required,string": {"==", `""`, "%s required"},
+		"required,uint8":  {"==", `0`, "%s required"},
+		"gte,uint8":       {"<", `?`, "%s must be >= ?"},
+		"lte,uint8":       {">", `?`, "%s must be <= ?"},
 	}
+
+	splitField := strings.Split(fieldValidation, "=")
+	validation := splitField[0]
+	target := ""
+	if len(splitField) > 1 {
+		target = splitField[1]
+	}
+
+	ifData, ok := ifCode[validation+","+fieldType]
+	if !ok {
+		return FieldTestElements{}, fmt.Errorf("unsupported validation %s type %s", fieldValidation, fieldType)
+	}
+
+	if ifData.operand == "?" {
+		ifData.operand = target
+		ifData.errorMessage = strings.Replace(ifData.errorMessage, "?", target, 1)
+	}
+
+	return ifData, nil
 }
 
 func (s *StructInfo) GenerateFileValidator() error {
