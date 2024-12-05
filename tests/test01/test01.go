@@ -8,8 +8,6 @@ type User struct {
 	FirstName string `validate:"required"`
 	LastName  string `validate:"required"`
 	Age       uint8  `validate:"required"`
-	// Age       uint8  `validate:"gte=0,lte=130"`
-	// Optional  string
 }
 
 type NoValidateInfo struct {
@@ -18,12 +16,22 @@ type NoValidateInfo struct {
 }
 
 func main() {
-
-	u := &User{}
-	if err := UserValidate(u); err != nil {
-		fmt.Println(err)
-		return
+	u1 := &User{}
+	if err := UserValidate(u1); err != nil {
+		fmt.Printf("User: %+v Error: %s\n", u1, err)
+	} else {
+		fmt.Printf("User: %+v is valid\n", u1)
 	}
 
-	fmt.Println("User is valid")
+	u2 := &User{
+		FirstName: "First",
+		LastName:  "Last",
+		Age:       1,
+	}
+
+	if err := UserValidate(u2); err != nil {
+		fmt.Printf("User: %+v Error: %s\n", u2, err)
+	} else {
+		fmt.Printf("User: %+v is valid\n", u2)
+	}
 }

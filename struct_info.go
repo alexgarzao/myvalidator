@@ -47,8 +47,9 @@ type FieldInfo struct {
 }
 
 type FieldTestElements struct {
+	loperand     string
 	operator     string
-	operand      string
+	roperand     string
 	errorMessage string
 }
 
@@ -74,28 +75,30 @@ func condition(fieldName, fieldType string, fieldValidations []string) (string, 
 
 	tests := ""
 	for _, fieldValidation := range fieldValidations {
-		testElements, err := GetFieldTestElements(fieldValidation, fieldType)
+		testElements, err := GetFieldTestElements(fieldName, fieldValidation, fieldType)
 		if err != nil {
 			return "", fmt.Errorf("field %s: %w", fieldName, err)
 		}
 
 		tests += fmt.Sprintf(
 			`
-	if obj.%s %s %s {
+	if %s %s %s {
 		errs = append(errs, fmt.Errorf("%%w: %s", ErrValidation))
 	}
-`, fieldName, testElements.operator, testElements.operand, fmt.Sprintf(testElements.errorMessage, fieldName))
+`, testElements.loperand, testElements.operator, testElements.roperand, testElements.errorMessage)
 	}
 
 	return tests, nil
 }
 
-func GetFieldTestElements(fieldValidation, fieldType string) (FieldTestElements, error) {
+func GetFieldTestElements(fieldName, fieldValidation, fieldType string) (FieldTestElements, error) {
 	ifCode := map[string]FieldTestElements{
-		"required,string": {"==", `""`, "%s required"},
-		"required,uint8":  {"==", `0`, "%s required"},
-		"gte,uint8":       {"<", `?`, "%s must be >= ?"},
-		"lte,uint8":       {">", `?`, "%s must be <= ?"},
+		"required,string": {"{{.Name}}", "==", `""`, "{{.Name}} required"},
+		"required,uint8":  {"{{.Name}}", "==", `0`, "{{.Name}} required"},
+		"gte,uint8":       {"{{.Name}}", "<", `{{.Target}}`, "{{.Name}} must be >= {{.Target}}"},
+		"lte,uint8":       {"{{.Name}}", ">", `{{.Target}}`, "{{.Name}} must be <= {{.Target}}"},
+		"gte,string":      {"len({{.Name}})", "<", `{{.Target}}`, "length {{.Name}} must be >= {{.Target}}"},
+		"lte,string":      {"len({{.Name}})", ">", `{{.Target}}`, "length {{.Name}} must be <= {{.Target}}"},
 	}
 
 	splitField := strings.Split(fieldValidation, "=")
@@ -110,10 +113,12 @@ func GetFieldTestElements(fieldValidation, fieldType string) (FieldTestElements,
 		return FieldTestElements{}, fmt.Errorf("unsupported validation %s type %s", fieldValidation, fieldType)
 	}
 
-	if ifData.operand == "?" {
-		ifData.operand = target
-		ifData.errorMessage = strings.Replace(ifData.errorMessage, "?", target, 1)
-	}
+	ifData.loperand = strings.Replace(ifData.loperand, "{{.Name}}", "obj."+fieldName, -1)
+	ifData.loperand = strings.Replace(ifData.loperand, "{{.Target}}", target, -1)
+	ifData.roperand = strings.Replace(ifData.roperand, "{{.Name}}", "obj."+fieldName, -1)
+	ifData.roperand = strings.Replace(ifData.roperand, "{{.Target}}", target, -1)
+	ifData.errorMessage = strings.Replace(ifData.errorMessage, "{{.Name}}", fieldName, -1)
+	ifData.errorMessage = strings.Replace(ifData.errorMessage, "{{.Target}}", target, -1)
 
 	return ifData, nil
 }
