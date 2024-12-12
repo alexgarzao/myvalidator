@@ -49,11 +49,11 @@ import (
 func UserValidate(obj *User) []error {
 	var errs []error
 
-	if obj.FirstName == "" {
+	if !(obj.FirstName != "") {
 		errs = append(errs, fmt.Errorf("%w: FirstName required", ErrValidation))
 	}
 
-	if obj.MyAge == 0 {
+	if !(obj.MyAge != 0) {
 		errs = append(errs, fmt.Errorf("%w: MyAge required", ErrValidation))
 	}
 
@@ -88,7 +88,7 @@ import (
 func UserValidate(obj *User) []error {
 	var errs []error
 
-	if len(obj.FirstName) < 5 {
+	if !(len(obj.FirstName) >= 5) {
 		errs = append(errs, fmt.Errorf("%w: length FirstName must be >= 5", ErrValidation))
 	}
 
@@ -140,7 +140,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "obj.myfield1",
-				operator:     "==",
+				operator:     "!=",
 				roperand:     `""`,
 				errorMessage: "myfield1 required",
 			},
@@ -155,7 +155,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "obj.myfield2",
-				operator:     "==",
+				operator:     "!=",
 				roperand:     `0`,
 				errorMessage: "myfield2 required",
 			},
@@ -170,7 +170,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "obj.myfield3",
-				operator:     "<",
+				operator:     ">=",
 				roperand:     `0`,
 				errorMessage: "myfield3 must be >= 0",
 			},
@@ -185,7 +185,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "obj.myfield4",
-				operator:     ">",
+				operator:     "<=",
 				roperand:     `130`,
 				errorMessage: "myfield4 must be <= 130",
 			},
@@ -200,7 +200,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "len(obj.myfield5)",
-				operator:     "<",
+				operator:     ">=",
 				roperand:     `5`,
 				errorMessage: "length myfield5 must be >= 5",
 			},
@@ -215,7 +215,7 @@ func TestGetFieldTestElements(t *testing.T) {
 			},
 			want: FieldTestElements{
 				loperand:     "len(obj.myfield6)",
-				operator:     ">",
+				operator:     "<=",
 				roperand:     `10`,
 				errorMessage: "length myfield6 must be <= 10",
 			},

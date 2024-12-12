@@ -82,7 +82,7 @@ func condition(fieldName, fieldType string, fieldValidations []string) (string, 
 
 		tests += fmt.Sprintf(
 			`
-	if %s %s %s {
+	if !(%s %s %s) {
 		errs = append(errs, fmt.Errorf("%%w: %s", ErrValidation))
 	}
 `, testElements.loperand, testElements.operator, testElements.roperand, testElements.errorMessage)
@@ -93,12 +93,12 @@ func condition(fieldName, fieldType string, fieldValidations []string) (string, 
 
 func GetFieldTestElements(fieldName, fieldValidation, fieldType string) (FieldTestElements, error) {
 	ifCode := map[string]FieldTestElements{
-		"required,string": {"{{.Name}}", "==", `""`, "{{.Name}} required"},
-		"required,uint8":  {"{{.Name}}", "==", `0`, "{{.Name}} required"},
-		"gte,uint8":       {"{{.Name}}", "<", `{{.Target}}`, "{{.Name}} must be >= {{.Target}}"},
-		"lte,uint8":       {"{{.Name}}", ">", `{{.Target}}`, "{{.Name}} must be <= {{.Target}}"},
-		"gte,string":      {"len({{.Name}})", "<", `{{.Target}}`, "length {{.Name}} must be >= {{.Target}}"},
-		"lte,string":      {"len({{.Name}})", ">", `{{.Target}}`, "length {{.Name}} must be <= {{.Target}}"},
+		"required,string": {"{{.Name}}", "!=", `""`, "{{.Name}} required"},
+		"required,uint8":  {"{{.Name}}", "!=", `0`, "{{.Name}} required"},
+		"gte,uint8":       {"{{.Name}}", ">=", `{{.Target}}`, "{{.Name}} must be >= {{.Target}}"},
+		"lte,uint8":       {"{{.Name}}", "<=", `{{.Target}}`, "{{.Name}} must be <= {{.Target}}"},
+		"gte,string":      {"len({{.Name}})", ">=", `{{.Target}}`, "length {{.Name}} must be >= {{.Target}}"},
+		"lte,string":      {"len({{.Name}})", "<=", `{{.Target}}`, "length {{.Name}} must be <= {{.Target}}"},
 	}
 
 	splitField := strings.Split(fieldValidation, "=")
