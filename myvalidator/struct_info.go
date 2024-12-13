@@ -12,6 +12,8 @@ var structValidatorTpl = `package {{.PackageName}}
 
 import (
 	"fmt"
+
+	"github.com/opencodeco/myvalidator/types"
 )
 
 func {{.Name}}Validate(obj *{{.Name}}) []error {
@@ -83,7 +85,7 @@ func condition(fieldName, fieldType string, fieldValidations []string) (string, 
 		tests += fmt.Sprintf(
 			`
 	if !(%s %s %s) {
-		errs = append(errs, fmt.Errorf("%%w: %s", ErrValidation))
+		errs = append(errs, fmt.Errorf("%%w: %s", types.ErrValidation))
 	}
 `, testElements.loperand, testElements.operator, testElements.roperand, testElements.errorMessage)
 	}
@@ -132,21 +134,6 @@ func (s *StructInfo) GenerateFileValidator() error {
 	}
 
 	if err := os.WriteFile(s.Path+"/"+strings.ToLower(s.Name)+"_validator.go", []byte(code), 0644); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *StructInfo) GenerateFilePackageDefinition() error {
-	fmt.Println("Generating package definitions code")
-
-	code, err := s.Generate()
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(s.Path+"/validators.go", []byte(code), 0644); err != nil {
 		return err
 	}
 

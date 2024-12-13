@@ -1,4 +1,4 @@
-package structsinpkg
+package types
 
 import (
 	"errors"

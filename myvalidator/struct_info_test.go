@@ -44,17 +44,19 @@ func TestStructInfoGenerateValidator(t *testing.T) {
 
 import (
 	"fmt"
+
+	"github.com/opencodeco/myvalidator/types"
 )
 
 func UserValidate(obj *User) []error {
 	var errs []error
 
 	if !(obj.FirstName != "") {
-		errs = append(errs, fmt.Errorf("%w: FirstName required", ErrValidation))
+		errs = append(errs, fmt.Errorf("%w: FirstName required", types.ErrValidation))
 	}
 
 	if !(obj.MyAge != 0) {
-		errs = append(errs, fmt.Errorf("%w: MyAge required", ErrValidation))
+		errs = append(errs, fmt.Errorf("%w: MyAge required", types.ErrValidation))
 	}
 
 	return errs
@@ -83,13 +85,15 @@ func UserValidate(obj *User) []error {
 
 import (
 	"fmt"
+
+	"github.com/opencodeco/myvalidator/types"
 )
 
 func UserValidate(obj *User) []error {
 	var errs []error
 
 	if !(len(obj.FirstName) >= 5) {
-		errs = append(errs, fmt.Errorf("%w: length FirstName must be >= 5", ErrValidation))
+		errs = append(errs, fmt.Errorf("%w: length FirstName must be >= 5", types.ErrValidation))
 	}
 
 	return errs

@@ -8,10 +8,6 @@ func generateCode(structs []StructInfo) error {
 			continue
 		}
 
-		if err := structInfo.GenerateFilePackageDefinition(); err != nil {
-			return err
-		}
-
 		if err := structInfo.GenerateFileValidator(); err != nil {
 			return err
 		}

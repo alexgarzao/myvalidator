@@ -18,7 +18,7 @@ The following requirements are needed to build the project:
 The steps to build are:
 ```
 # Clone the project repository
-git clone git@github.com:alexgarzao/myvalidator.git
+git clone git@github.com:opencodeco/myvalidator.git
 
 # Run the tests (optional)
 make test
